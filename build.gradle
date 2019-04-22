@@ -1,0 +1,78 @@
+buildscript {
+    dependencies {
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+    }
+}
+
+apply plugin: 'scala'
+apply plugin: 'java'
+apply plugin: 'idea'
+
+group 'com.hyf'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    main{
+        scala {
+            srcDirs = ['src/main/scala', 'src/main/java']
+        }
+        java {
+            srcDirs = []
+        }
+    }
+}
+
+
+dependencies {
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/io.spray/spray-json
+    compile group: 'io.spray', name: 'spray-json_2.12', version: '1.3.3'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-scala
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-scala_2.12', version: '2.9.6'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-joda
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-joda', version: '2.9.8'
+    // https://mvnrepository.com/artifact/org.json4s/json4s-jackson
+    compile group: 'org.json4s', name: 'json4s-jackson_2.12', version: '3.6.3'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
+    // https://mvnrepository.com/artifact/org.scala-lang/scala-library
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.12.8'
+
+}
+
+
+
+apply plugin: 'javafx-gradle-plugin'
+jfx {
+    verbose = true
+
+    deployDir = "src/main/deploy/"
+
+    // minimal requirement for jfxJar-task
+    mainClass = 'com.mysms.Main'
+
+    // minimal requirement for jfxNative-task
+    vendor = 'houyafei'
+
+    appName = "SendMessage"
+
+}
+
+
+

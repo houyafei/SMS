@@ -1,0 +1,6 @@
+/build
+/out
+/.idea
+/.gradle
+*.log
+/src/main/scala/tencentsms/TencentKey.scala
