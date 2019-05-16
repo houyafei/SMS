@@ -34,7 +34,13 @@ sourceSets {
         }
     }
 }
+compileJava {
+    options.encoding = "UTF-8"
+}
 
+compileScala {
+    options.encoding = "UTF-8"
+}
 
 dependencies {
 
@@ -70,7 +76,7 @@ jfx {
     // minimal requirement for jfxNative-task
     vendor = 'houyafei'
 
-    appName = "SendMessage"
+    appName = "MssagePlatform"
 
 }
 

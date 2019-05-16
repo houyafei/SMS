@@ -1,4 +1,4 @@
-package tencentsms
+package tencentsms.util
 
 import java.io.OutputStream
 import java.net.{HttpURLConnection, URL}

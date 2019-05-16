@@ -1,12 +1,12 @@
-package tencentsms
+package tencentsms.util
 
 import java.lang.reflect.{ParameterizedType, Type}
 
-import com.fasterxml.jackson.databind.{MapperFeature, SerializationFeature, DeserializationFeature, ObjectMapper}
-import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.datatype.joda.JodaModule
 import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.joda.JodaModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 
 // scalastyle:off named.argument
 object JsonMapper {
@@ -51,5 +51,3 @@ object JsonMapper {
     }
   }
 }
-
-// scalastyle:on named.argument

@@ -1,7 +1,9 @@
-package tencentsms
+package tencentsms.util
 
 import java.security.MessageDigest
+
 import scala.util.Random
+
 object TencentSignUtil {
 
   def buildSig(paramString: String): String = {
@@ -31,10 +33,3 @@ object TencentSignUtil {
     System.currentTimeMillis() / 1000
   }
 }
-
-//object TencentKey {
-//  //  线上
-//  val appKey = "xxxxxxxxxxxx"
-//  val sdkappid = "xxxxxxxxxxxxx"
-//  val tmpId = 1111
-//}
