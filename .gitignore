@@ -3,5 +3,5 @@
 /.idea
 /.gradle
 *.log
-/src/main/scala/tencentsms/TencentOnLineKey.scala
-/src/main/scala/tencentsms/TencentTestKey.scala
+/src/main/scala/tencentsms/util/TencentOnLineKey.scala
+/src/main/scala/tencentsms/util/TencentTestKey.scala
