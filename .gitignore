@@ -5,3 +5,4 @@
 *.log
 /src/main/scala/tencentsms/util/TencentOnLineKey.scala
 /src/main/scala/tencentsms/util/TencentTestKey.scala
+/src/main/scala/tencentsms/util/Tencent*
