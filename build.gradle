@@ -15,7 +15,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 
 group 'com.hyf'
-version '1.0-SNAPSHOT'
+version '2.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 

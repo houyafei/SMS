@@ -8,12 +8,19 @@ import tencentsms.SmsResponse;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 
-import static com.mysms.service.SomeService.checkMsgPhoneAndContent;
+import java.util.LinkedList;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+
 import static com.mysms.service.SomeService.checkMultInputMsg;
 
 public class SendMsgService extends Service<SmsSendReport> {
+
+    private ExecutorService executor = new ThreadPoolExecutor(8, 20, 60, TimeUnit.SECONDS, new LinkedBlockingDeque());
+
+    private LinkedList<Future<SmsReqAndResponse>> resultQueue = new LinkedList<>();
 
     private SmsSendReport report = new SmsSendReport();
 
@@ -43,9 +50,6 @@ public class SendMsgService extends Service<SmsSendReport> {
 
     }
 
-    int count = 0;
-
-
     @Override
     protected Task<SmsSendReport> createTask() {
         Task<SmsSendReport> task = null;
@@ -65,20 +69,22 @@ public class SendMsgService extends Service<SmsSendReport> {
         return new Task<SmsSendReport>() {
             @Override
             protected SmsSendReport call() throws Exception {
-                try {
-                    BufferedReader bf = new BufferedReader(new FileReader(msgFile));
-                    bf.lines().forEach(t -> {
-                        SmsResponse smsResponse = SomeService.sendSingleMsg(t);
-                        updateReport(smsResponse, t);
-                        ++count;
-                        updateMessage("已经发送：" + count + "条");
-                    });
-
-                    bf.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                int count = 0;
+                // way 1 2988ms,223条
+                BufferedReader bf = new BufferedReader(new FileReader(msgFile));
+                AtomicBoolean flag = new AtomicBoolean(true);
+                new Thread(() -> {
+                    bf.lines().forEach(t -> resultQueue.addLast(executor.submit(() -> new SmsReqAndResponse(t, SomeService.sendSingleMsg(t)))));
+                    flag.set(false);
+                }).start();
+                while (flag.get() || !resultQueue.isEmpty()) {
+                    if (!resultQueue.isEmpty()) {
+                        updateMessage("已经发送：" + (++count) + "条");
+                        updateReport(resultQueue.removeFirst().get());
+                    }
                 }
-
+                updateMessage("总计发送：" + count + "条，OK");
+                bf.close();
                 return report;
             }
 
@@ -104,20 +110,22 @@ public class SendMsgService extends Service<SmsSendReport> {
         return new Task<SmsSendReport>() {
             @Override
             protected SmsSendReport call() throws Exception {
-                System.out.println(1+"-" + mulInputMsg);
+
                 if (checkMultInputMsg(mulInputMsg)) {
-                    System.out.println(2+"-" + mulInputMsg);
                     String[] msgContent = mulInputMsg.split("\n");
                     int count = 0;
                     int max = msgContent.length > 0 ? msgContent.length : 1;
-
-                    for (String sms : msgContent) {
-
-                        SmsResponse smsResponse = SomeService.sendSingleMsg(sms);
-                        updateReport(smsResponse, sms);
-
-
-                        updateProgress(++count, max);
+                    // way 1  (208条：3122ms)
+                    new Thread(() -> {
+                        for (String sms : msgContent) {
+                            resultQueue.addLast(executor.submit(() -> new SmsReqAndResponse(sms, SomeService.sendSingleMsg(sms))));
+                        }
+                    }).start();
+                    while (max > count) {
+                        if (!resultQueue.isEmpty()) {
+                            updateProgress(++count, max);
+                            updateReport(resultQueue.removeFirst().get());
+                        }
                     }
                 } else {
                     updateMessage("fail");
@@ -147,5 +155,41 @@ public class SendMsgService extends Service<SmsSendReport> {
             report.getFailCount().getAndAdd(1);
             report.getReportContent().put(sms, smsResponse.errmsg());
         }
+    }
+
+    private void updateReport(SmsReqAndResponse smsResponse) {
+        if (smsResponse.getSmsResponse().result() == 0) {
+            report.getSuccessCount().getAndAdd(1);
+        } else {
+            report.getFailCount().getAndAdd(1);
+            report.getReportContent().put(smsResponse.getSmsContent(), smsResponse.getSmsResponse().errmsg());
+        }
+    }
+}
+
+
+class SmsReqAndResponse {
+    private String smsContent;
+    private SmsResponse smsResponse;
+
+    public SmsReqAndResponse(String smsContent, SmsResponse smsResponse) {
+        this.smsContent = smsContent;
+        this.smsResponse = smsResponse;
+    }
+
+    public String getSmsContent() {
+        return smsContent;
+    }
+
+    public void setSmsContent(String smsContent) {
+        this.smsContent = smsContent;
+    }
+
+    public SmsResponse getSmsResponse() {
+        return smsResponse;
+    }
+
+    public void setSmsResponse(SmsResponse smsResponse) {
+        this.smsResponse = smsResponse;
     }
 }

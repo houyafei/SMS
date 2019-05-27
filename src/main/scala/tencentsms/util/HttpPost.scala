@@ -17,8 +17,8 @@ object HttpPost {
     connection.setDoOutput(true)
     connection.setRequestProperty("Accept", "application/json") // 设置接收数据的格式
 
-    connection.setConnectTimeout(2000)
-    connection.setReadTimeout(10000)
+//    connection.setConnectTimeout(50000)
+//    connection.setReadTimeout(50000)
     import java.io.{BufferedWriter, OutputStreamWriter}
     import java.nio.charset.StandardCharsets
     val outputStream: OutputStream = connection.getOutputStream
