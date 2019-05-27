@@ -1,10 +1,12 @@
 package com.mysms;
 
 
+import com.mysms.dto.PackageInfomation;
 import com.mysms.service.SendMsgService;
 import com.mysms.service.SomeService;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -15,6 +17,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 
 
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
@@ -30,6 +33,8 @@ import scala.collection.immutable.List;
 import tencentsms.*;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 
 public class Main extends Application {
@@ -55,7 +60,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
 
 
-        primaryStage.setTitle("短信平台 v1.0");
+        primaryStage.setTitle("短信平台 v2.0");
         primaryStage.getIcons().add(new Image("msg.jpg"));
 
         Separator[] separator = new Separator[]{new Separator(), new Separator()};
@@ -92,40 +97,40 @@ public class Main extends Application {
         hBox.setPadding(new Insets(10, 0, 8, 0));
         hBox.setSpacing(20);
 
-        CheckBox testEnv = new CheckBox("测试环境");
-        CheckBox OnlineEnv = new CheckBox("线上环境");
-        testEnv.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            testEnv.setEffect(newValue ? new DropShadow() : null);
-            if (newValue) {
-                ValueConstant.SELECTED_ENVIRONMENT = Env.TestEnv();
-                updateComoBox(Env.TestEnv());
-            } else {
-                ValueConstant.SELECTED_ENVIRONMENT = Env.NoThing();
-            }
-        });
-        OnlineEnv.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            OnlineEnv.setEffect(newValue ? new DropShadow() : null);
-            if (newValue) {
-                ValueConstant.SELECTED_ENVIRONMENT = Env.OnlineEnv();
-                updateComoBox(Env.OnlineEnv());
-            } else {
-                ValueConstant.SELECTED_ENVIRONMENT = Env.NoThing();
+        final ToggleGroup group = new ToggleGroup();
+
+        RadioButton testBtn = new RadioButton("测试环境");
+        testBtn.setToggleGroup(group);
+        testBtn.setUserData(Env.TestEnv());
+        testBtn.setSelected(true);
+
+        testBtn.setEffect(new DropShadow());
+        ValueConstant.SELECTED_ENVIRONMENT = Env.TestEnv();
+        updateComoBox(Env.TestEnv());
+
+        RadioButton onlineBtn = new RadioButton("线上环境");
+        onlineBtn.setToggleGroup(group);
+        onlineBtn.setUserData(Env.OnlineEnv());
+
+
+        group.selectedToggleProperty().addListener((ObservableValue<? extends Toggle> ov, Toggle old_toggle,
+                                                    Toggle new_toggle) -> {
+            if (group.getSelectedToggle() != null) {
+                ValueConstant.SELECTED_ENVIRONMENT = (int) group.getSelectedToggle().getUserData();
+
+                group.getToggles().forEach(a -> {
+                    if (a.isSelected()) {
+                        ((RadioButton) a).setEffect(new DropShadow());
+                    } else {
+                        ((RadioButton) a).setEffect(null);
+                    }
+                });
+                updateComoBox(ValueConstant.SELECTED_ENVIRONMENT);
             }
         });
 
-        OnlineEnv.setOnMouseClicked(e -> {
-            if (testEnv.isSelected()) {
-                testEnv.setSelected(!testEnv.isSelected());
-            }
-        });
-        testEnv.setOnMouseClicked(e -> {
-            if (OnlineEnv.isSelected()) {
-                OnlineEnv.setSelected(!OnlineEnv.isSelected());
-            }
-        });
-
-        hBox.getChildren().add(testEnv);
-        hBox.getChildren().add(OnlineEnv);
+        hBox.getChildren().add(testBtn);
+        hBox.getChildren().add(onlineBtn);
         hBox.getChildren().add(selectTmpId());
         return hBox;
     }
@@ -135,13 +140,17 @@ public class Main extends Application {
             return;
         }
         new Thread(() -> {
-            List<TmpContent> tmpList = TentSmSTmp.obtainTmp(env);
-            ValueConstant.processTmpSms(tmpList);
+
+            if (!ValueConstant.All_SMS_TMP.containsKey(env)) {
+                List<TmpContent> tmpList = TentSmSTmp.obtainTmp(env);
+                ValueConstant.processTmpSms(tmpList);
+            }
             Platform.runLater(() -> {
                 ObservableList<String> data = FXCollections.observableArrayList();
                 asd.setItems(data);
                 asd.setPromptText("选择短信模板");
-                data.addAll(ValueConstant.SMS_TMP_ID_LIST.toArray(new String[ValueConstant.SMS_TMP_ID_LIST.size()]));
+                java.util.List<String> tmpId = ValueConstant.All_SMS_TMP.get(env);
+                data.addAll(tmpId.toArray(new String[tmpId.size()]));
             });
 
         }).start();
@@ -156,20 +165,14 @@ public class Main extends Application {
         hBoxSelectTmp.setAlignment(Pos.CENTER);
         hBoxSelectTmp.setPadding(new Insets(10, 0, 8, 0));
         hBoxSelectTmp.setSpacing(20);
-        Label tmpId = new Label("选择短信模板Id："); // select tmp_id
-
-
-        ObservableList<String> data = FXCollections.observableArrayList();
-
+        Label tmpId = new Label("选择短信模板Id：");
 
         asd.setPromptText("选择短信模板");
-        data.addAll(ValueConstant.SMS_TMP_ID_LIST.toArray(new String[ValueConstant.SMS_TMP_ID_LIST.size()]));
-        asd.setItems(data);
 
         asd.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && newValue.contains(":")) {
                 ValueConstant.SMS_TMP_ID = newValue.split(":")[0];
-                resultReport.setText("【短信内容】：\n " + ValueConstant.SMS_CONTENT.get(ValueConstant.SMS_TMP_ID).text());
+                resultReport.setText("【短信内容】：\n " + ValueConstant.All_SMS.get(ValueConstant.SELECTED_ENVIRONMENT).get(ValueConstant.SMS_TMP_ID).text());
             } else {
                 resultReport.setText("选择短信模板");
             }
@@ -191,7 +194,7 @@ public class Main extends Application {
         Label readme = new Label();
         readme.setMaxWidth(320);
         readme.setWrapText(true);
-        readme.setText("\n\n\n"+ValueConstant.READ_ME);
+        readme.setText("\n\n\n" + ValueConstant.READ_ME);
         vBox.getChildren().addAll(readme, tmpSmSContent);
         return vBox;
     }
@@ -248,7 +251,7 @@ public class Main extends Application {
         textArea.setWrapText(true);
         textArea.setPrefColumnCount(TextArea.DEFAULT_PREF_COLUMN_COUNT - 20);
         textArea.setPrefRowCount(TextArea.DEFAULT_PREF_ROW_COUNT - 3);
-        textArea.setPromptText("包含参数的数据使用（英文逗号）分隔，例如: \r\n13262272821,xxxxxeedd");
+        textArea.setPromptText("包含参数的数据使用（英文逗号）分隔，例如: \r\n13161367295,iamcouponcdk");
         Button send2 = new Button("发送");
         send2.setOnMouseClicked(e -> {
             String[] str = textArea.getText().split("\n");
@@ -263,7 +266,7 @@ public class Main extends Application {
                     Platform.runLater(() -> {
                         textArea.textProperty().unbind();
                         textArea.setText(textArea.getText() + "\n" + smsSendReport.getReportMsg() + "\n ok ");
-                        resultReport.setText(String.format("Success: %d, Fail: %d \nError msg: \n%s",
+                        resultReport.setText(String.format("【成功发送】: %d, 【失败发送】: %d \n【错误信息】: \n%s",
                                 smsSendReport.getSuccessCount().get(),
                                 smsSendReport.getFailCount().get(),
                                 smsSendReport.getFailCount().get() == 0 ? "None" : smsSendReport.obtainFailMsg()));
@@ -328,7 +331,7 @@ public class Main extends Application {
                 sendMsgService.setOnSucceeded(v -> {
                     smsSendReport = sendMsgService.getValue();
                     Platform.runLater(() -> {
-                        resultReport.setText(String.format("成功发送: %d, 失败发送: %d \n错误信息: \n%s",
+                        resultReport.setText(String.format("【成功发送】: %d, 【失败发送】: %d \n【错误信息】: \n%s",
                                 smsSendReport.getSuccessCount().get(),
                                 smsSendReport.getFailCount().get(),
                                 smsSendReport.getFailCount().get() == 0 ? "None" : smsSendReport.obtainFailMsg()));
@@ -360,7 +363,7 @@ public class Main extends Application {
         Separator separator = new Separator();
         separator.setMaxWidth(100);
 
-        resultReport.setPrefRowCount(2);
+        resultReport.setPrefRowCount(5);
         resultReport.setMaxWidth(400);
         resultReport.setWrapText(true);
         resultReport.setEditable(false);
@@ -369,6 +372,118 @@ public class Main extends Application {
         return vBox;
     }
 
+    private VBox obtainHasSentMsgCount() {
+        VBox vBox = new VBox();
+        vBox.setAlignment(Pos.TOP_LEFT);
+        vBox.setPadding(new Insets(10, 0, 8, 0));
+        vBox.setSpacing(5);
+//        HBox hBox0 = new HBox();
+//        hBox0.setAlignment(Pos.CENTER_LEFT);
+//        hBox0.setPadding(new Insets(10, 0, 8, 0));
+//        hBox0.setSpacing(5);
+//        Label packageQuery = new Label("套餐查询:");
+//        Button packageBtn = new Button("查询");
+//        packageBtn.setOnMouseClicked(eve -> openNewWindow());
+//
+//        hBox0.getChildren().addAll(packageQuery, packageBtn);
+
+        Label prompt = new Label("发送短信数量查询: (先选择起止日期)");
+
+        HBox hBox = new HBox();
+        hBox.setAlignment(Pos.CENTER_LEFT);
+        hBox.setPadding(new Insets(10, 0, 8, 0));
+        hBox.setSpacing(5);
+        Button obtainCount = new Button("查询");
+        Label result = new Label();
+        result.setWrapText(true);
+        DatePicker beginDate = new DatePicker(LocalDate.of(2019, 01, 01));
+        beginDate.setPrefWidth(100);
+        DatePicker endDate = new DatePicker(LocalDate.now());
+        endDate.setPrefWidth(100);
+        obtainCount.setOnMouseClicked(v -> {
+            LocalDate begin = beginDate.getValue();
+            LocalDate end = endDate.getValue();
+            System.out.println(ValueConstant.SELECTED_ENVIRONMENT);
+            System.out.println(end.isAfter(begin) + "," + (ValueConstant.SELECTED_ENVIRONMENT != Env.NoThing()));
+            if (end.isAfter(begin) && ValueConstant.SELECTED_ENVIRONMENT != Env.NoThing()) {
+                MsgCountResponse msgRep = TentSmsStatistic.obtainSentMsgCount(ValueConstant.SELECTED_ENVIRONMENT,
+                        begin.format(DateTimeFormatter.ofPattern("yyyyMMdd01")),
+                        end.format(DateTimeFormatter.ofPattern("yyyyMMdd23")));
+                if (msgRep.result() == 0) {
+                    result.setText(String.format("【发送总量】 %d\n【成功总量】 %d\n【收费总量】 %d", msgRep.data().request(),
+                            msgRep.data().success(), msgRep.data().bill_number()));
+                    resultReport.setText("【发送总量】:短信请求次数\n【成功总量】:成功发送短信次数 \n【收费总量】:单次发送字数超过一条短信长度，按照两条短信计费");
+                } else {
+                    result.setText(msgRep.result() + ":\n" + msgRep.errmsg());
+                }
+            } else {
+                result.setText("1、结束时间要大于起始时间;\n2、选择所要请求的环境。");
+            }
+        });
+        hBox.getChildren().addAll(beginDate, endDate, obtainCount);
+        vBox.getChildren().addAll(prompt, hBox, result);
+        return vBox;
+    }
+
+    /**
+     * 创建表格
+     */
+    private void openNewWindow() {
+        Stage tableStage = new Stage();
+        tableStage.setTitle("短信平台 v1.1 套餐包信息");
+        tableStage.getIcons().add(new Image("msg.jpg"));
+        VBox vBox = new VBox();
+        vBox.setAlignment(Pos.TOP_CENTER);
+        vBox.setPadding(new Insets(10, 0, 8, 0));
+
+        final TableView<PackageInfomation> table = new TableView<>();
+        ObservableList<PackageInfomation> data = FXCollections.observableArrayList();
+
+        TableColumn packageId = new TableColumn("套餐包 ID");
+        TableColumn amount = new TableColumn("套餐包条数");
+        TableColumn used = new TableColumn("当前使用量");
+        TableColumn packageType = new TableColumn("套餐包类型");
+        TableColumn beginTime = new TableColumn("套餐包生效时间");
+        TableColumn endTime = new TableColumn("套餐包过期时间");
+        TableColumn createTime = new TableColumn("套餐包创建时间");
+
+        packageId.setCellValueFactory(new PropertyValueFactory<>("packageId"));
+        amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        used.setCellValueFactory(new PropertyValueFactory<>("used"));
+        packageType.setCellValueFactory(new PropertyValueFactory<>("packageType"));
+        beginTime.setCellValueFactory(new PropertyValueFactory<>("beginTime"));
+        endTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        createTime.setCellValueFactory(new PropertyValueFactory<>("createTime"));
+
+        packageId.setMinWidth(100);
+        amount.setMinWidth(100);
+        used.setMinWidth(100);
+        packageType.setMinWidth(100);
+        beginTime.setMinWidth(150);
+        endTime.setMinWidth(150);
+        createTime.setMinWidth(150);
+
+        new Thread(() -> {
+            Platform.runLater(() -> {
+                if (data.size() == 0) {
+                    TentSmsStatistic.obtainPackageInfos(ValueConstant.SELECTED_ENVIRONMENT).foreach((info) -> {
+                        PackageInfomation temp = new PackageInfomation(info.package_id(), info.amount(), info.used(), info.type(), info.from_time(), info.to_time(), info.create_time());
+                        data.add(temp);
+                        return null;
+                    });
+                }
+            });
+
+
+        }).start();
+
+        table.setItems(data);
+        table.getColumns().addAll(packageId, amount, used, packageType, beginTime, endTime, createTime);
+        vBox.getChildren().addAll(table);
+        tableStage.setScene(new Scene(vBox, 850, 500));
+        tableStage.show();
+
+    }
 
     private HBox sendMsgWay() {
         HBox hBox = new HBox();
@@ -380,7 +495,7 @@ public class Main extends Application {
         Tab tab0 = new Tab();
         tab0.setText("说明");
         tab0.setContent(readMe());
-
+        tab0.setClosable(false);
         Tab tab1 = new Tab();
         tab1.setText("单条短信");
         tab1.setContent(singlePhone());
@@ -393,7 +508,12 @@ public class Main extends Application {
         tab3.setText("批量短信文件");
         tab3.setContent(selectFile());
         tab3.setClosable(false);
-        ways.getTabs().addAll(tab0, tab1, tab2, tab3);
+        Tab tab4 = new Tab();
+        tab4.setText("短信发送统计");
+        tab4.setContent(obtainHasSentMsgCount());
+        tab4.setClosable(false);
+
+        ways.getTabs().addAll(tab0, tab1, tab2, tab3, tab4);
         ways.setSide(Side.TOP);
 
         ways.setTabClosingPolicy(TabPane.TabClosingPolicy.SELECTED_TAB);

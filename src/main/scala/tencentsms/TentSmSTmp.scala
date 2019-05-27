@@ -25,16 +25,15 @@ object TentSmSTmp {
       case Env.NoThing =>
     }
 
-    if (flag) {
+    while (flag) {
       val res = TmpRequest(TencentSignUtil.buildSig(s"appkey=$appKey&random=$random&time=$time"), time, TmpPage(max, offset))
       val resultStr = HttpPost.sendPost(s"https://yun.tim.qq.com/v5/tlssmssvr/get_template?sdkappid=$sdkappid&random=$random", JsonMapper.to(res))
       log.info(resultStr)
       val result = JsonMapper.from[TmpResponse](resultStr)
-      if (result.count <= 0) {
+      tmpList = tmpList ::: result.data
+      offset = max + offset
+      if (result.count < max) {
         flag = false
-      } else {
-        tmpList = tmpList ::: result.data
-        offset = max + offset
       }
     }
     tmpList

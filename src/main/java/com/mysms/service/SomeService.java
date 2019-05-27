@@ -1,6 +1,5 @@
 package com.mysms.service;
 
-import com.mysms.SmsSendReport;
 import com.mysms.ValueConstant;
 import tencentsms.SendMsgUtil;
 import tencentsms.SmsResponse;
@@ -8,9 +7,7 @@ import tencentsms.Telphone;
 import tencentsms.TmpContent;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class SomeService {
@@ -47,13 +44,11 @@ public class SomeService {
         if (content == null) {
             return false;
         }
-
         int count = content.split(",").length;
-        TmpContent tmpContent = ValueConstant.SMS_CONTENT.get(ValueConstant.SMS_TMP_ID);
+        TmpContent tmpContent = ValueConstant.All_SMS.get(ValueConstant.SELECTED_ENVIRONMENT).get(ValueConstant.SMS_TMP_ID);
         String text = tmpContent.text();
         int variableCount = getVariableCount(text);
         int status = tmpContent.status();
-        System.out.println(String.format("status: %d, count: %d, variableCount: %d", status, count, variableCount));
         return status == 0 && count - 1 == variableCount;
 
     }
