@@ -39,9 +39,10 @@ compileScala {
 ## 4、效果图
 
 v1 版本
+
 ![效果图](https://github.com/houyafei/SMS/blob/master/image/first.png)
 
-v2 版本v2
+v2 版本
 
 ![效果图](https://github.com/houyafei/SMS/blob/master/image/v2.png)
 
