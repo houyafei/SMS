@@ -39,7 +39,7 @@ public class Main extends Application {
 
     private VBox root = new VBox();
 
-    private ComboBox<String> asd = new ComboBox<String>();
+    private ComboBox<String> asd = new ComboBox<>();
     private Label tmpSmSContent = new Label();
 
     private TextArea resultReport = new TextArea();
@@ -144,11 +144,14 @@ public class Main extends Application {
                 ValueConstant.processTmpSms(tmpList);
             }
             Platform.runLater(() -> {
+                ValueConstant.SMS_TMP_ID = "";
                 ObservableList<String> data = FXCollections.observableArrayList();
                 asd.setItems(data);
                 asd.setPromptText("选择短信模板");
                 java.util.List<String> tmpId = ValueConstant.All_SMS_TMP.get(env);
-                data.addAll(tmpId.toArray(new String[tmpId.size()]));
+                String[] tmpIds = new String[tmpId.size()];
+                tmpId.toArray(tmpIds);
+                data.addAll(tmpIds);
             });
 
         }).start();
@@ -172,7 +175,7 @@ public class Main extends Application {
                 ValueConstant.SMS_TMP_ID = newValue.split(":")[0];
                 resultReport.setText("【短信内容】：\n " + ValueConstant.All_SMS.get(ValueConstant.SELECTED_ENVIRONMENT).get(ValueConstant.SMS_TMP_ID).text());
             } else {
-                resultReport.setText("选择短信模板");
+                resultReport.setText("【!!!!!】选择短信模板");
             }
         });
 
@@ -216,11 +219,15 @@ public class Main extends Application {
         sendMsgBtn.setOnMouseClicked(event -> {
             String phone = phoneNum.getText().trim();
             String code = content.getText().trim();
-            new Thread(() -> {
-                SmsResponse rsp = SomeService.sendSingleMsg(phone, code);
-                Platform.runLater(() -> resultReport.setText(String.format("手机号: %s \n短信内容: %s \n发送结果: %d, %s",
-                        phone, code, rsp.result(), rsp.errmsg())));
-            }).start();
+            if (ValueConstant.SMS_TMP_ID.equals("")) {
+                alertWin("【注意】选择短信模板才可以发短信");
+            } else {
+                new Thread(() -> {
+                    SmsResponse rsp = SomeService.sendSingleMsg(phone, code);
+                    Platform.runLater(() -> resultReport.setText(String.format("手机号: %s \n短信内容: %s \n发送结果: %d, %s",
+                            phone, code, rsp.result(), rsp.errmsg())));
+                }).start();
+            }
 
         });
 
@@ -233,6 +240,18 @@ public class Main extends Application {
 
         return gridPane01;
 
+    }
+
+    private void alertWin(String content) {
+        Stage stage = new Stage();
+        stage.setTitle("【注意】");
+        HBox hBox = new HBox();
+        hBox.setAlignment(Pos.TOP_CENTER);
+        hBox.setPadding(new Insets(50, 0, 8, 0));
+        Label contentLabel = new Label(content);
+        hBox.getChildren().add(contentLabel);
+        stage.setScene(new Scene(hBox, 300, 200));
+        stage.show();
     }
 
     private GridPane multilPhoneInput() {
@@ -253,8 +272,8 @@ public class Main extends Application {
         Button send2 = new Button("发送");
         send2.setOnMouseClicked(e -> {
             String[] str = textArea.getText().split("\n");
-            if (str.length > 1000) {
-                testAreaStatusLabel.setText("一次处理请少于1000行");
+            if (str.length > 1000 || ValueConstant.SMS_TMP_ID.equals("")) {
+                alertWin("【!】一次处理请少于1000行\n" + "【!】没有选择短信模板");
             } else {
                 SendMsgService sendMsgService = new SendMsgService(textArea.getText(), SendMsgService.SendType.MultInputMsg);
                 sendMsgService.start();
@@ -308,7 +327,7 @@ public class Main extends Application {
                 fileName.setText(filePath);
                 fileName.setWrapText(true);
                 if (ValueConstant.SMS_TMP_ID.equals("")) {
-                    sendProgress.setText("-> 请先选择短信模板 <-");
+                    alertWin("【!】没有选择短信模板");
                 } else {
                     if (SomeService.checkFile(filePath)) {
                         sendSmS.setDisable(false);
@@ -407,7 +426,7 @@ public class Main extends Application {
         Button obtainCount = new Button("查询");
         Label result = new Label();
         result.setWrapText(true);
-        DatePicker beginDate = new DatePicker(LocalDate.of(2019, 01, 01));
+        DatePicker beginDate = new DatePicker(LocalDate.of(2019, 1, 1));
         beginDate.setPrefWidth(100);
         DatePicker endDate = new DatePicker(LocalDate.now());
         endDate.setPrefWidth(100);

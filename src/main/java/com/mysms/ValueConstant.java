@@ -10,7 +10,7 @@ public final class ValueConstant {
     public static int SELECTED_ENVIRONMENT = Env.NoThing();
     public static String SMS_TMP_ID = "";
     public static String SGIN_NAME = "";
-
+    public static final int  AVAIL_PROCESSORS = Runtime.getRuntime().availableProcessors();
     public static Map<Integer, Map<String, TmpContent>> All_SMS = new HashMap<>(2);
     public static Map<Integer, List<String>> All_SMS_TMP = new HashMap<>(2);
 

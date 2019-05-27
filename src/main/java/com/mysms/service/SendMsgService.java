@@ -1,8 +1,10 @@
 package com.mysms.service;
 
 import com.mysms.SmsSendReport;
+import com.mysms.ValueConstant;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+
 import tencentsms.SmsResponse;
 
 import java.io.BufferedReader;
@@ -18,7 +20,8 @@ import static com.mysms.service.SomeService.checkMultInputMsg;
 
 public class SendMsgService extends Service<SmsSendReport> {
 
-    private ExecutorService executor = new ThreadPoolExecutor(8, 20, 60, TimeUnit.SECONDS, new LinkedBlockingDeque());
+
+    private ExecutorService executor;
 
     private LinkedList<Future<SmsReqAndResponse>> resultQueue = new LinkedList<>();
 
@@ -40,6 +43,8 @@ public class SendMsgService extends Service<SmsSendReport> {
             this.sendType = sendType;
         }
 
+        executor = new ThreadPoolExecutor(ValueConstant.AVAIL_PROCESSORS,
+                ValueConstant.AVAIL_PROCESSORS * 3, 60, TimeUnit.SECONDS, new LinkedBlockingDeque(512));
     }
 
     public SendMsgService(File msgFile, SendType sendType) {
@@ -48,6 +53,8 @@ public class SendMsgService extends Service<SmsSendReport> {
             this.sendType = sendType;
         }
 
+        executor = new ThreadPoolExecutor(ValueConstant.AVAIL_PROCESSORS,
+                ValueConstant.AVAIL_PROCESSORS * 3, 60, TimeUnit.SECONDS, new LinkedBlockingDeque(512));
     }
 
     @Override
@@ -147,16 +154,6 @@ public class SendMsgService extends Service<SmsSendReport> {
             }
         };
     }
-
-    private void updateReport(SmsResponse smsResponse, String sms) {
-        if (smsResponse.result() == 0) {
-            report.getSuccessCount().getAndAdd(1);
-        } else {
-            report.getFailCount().getAndAdd(1);
-            report.getReportContent().put(sms, smsResponse.errmsg());
-        }
-    }
-
     private void updateReport(SmsReqAndResponse smsResponse) {
         if (smsResponse.getSmsResponse().result() == 0) {
             report.getSuccessCount().getAndAdd(1);
@@ -172,24 +169,18 @@ class SmsReqAndResponse {
     private String smsContent;
     private SmsResponse smsResponse;
 
-    public SmsReqAndResponse(String smsContent, SmsResponse smsResponse) {
+    SmsReqAndResponse(String smsContent, SmsResponse smsResponse) {
         this.smsContent = smsContent;
         this.smsResponse = smsResponse;
     }
 
-    public String getSmsContent() {
+    String getSmsContent() {
         return smsContent;
     }
 
-    public void setSmsContent(String smsContent) {
-        this.smsContent = smsContent;
-    }
-
-    public SmsResponse getSmsResponse() {
+    SmsResponse getSmsResponse() {
         return smsResponse;
     }
 
-    public void setSmsResponse(SmsResponse smsResponse) {
-        this.smsResponse = smsResponse;
-    }
+
 }
