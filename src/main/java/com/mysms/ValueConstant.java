@@ -9,12 +9,14 @@ import java.util.*;
 public final class ValueConstant {
     public static int SELECTED_ENVIRONMENT = Env.NoThing();
     public static String SMS_TMP_ID = "";
-
+    public static String SGIN_NAME = "";
 
     public static Map<Integer, Map<String, TmpContent>> All_SMS = new HashMap<>(2);
     public static Map<Integer, List<String>> All_SMS_TMP = new HashMap<>(2);
 
-    public static final String READ_ME = "1、选择测试环境或者线上环境\n" +
+    public static final String READ_ME = "" +
+            "0、如需要配置短信签名请点击【统计与配置】中进行配置\n" +
+            "1、选择测试环境或者线上环境\n" +
             "2、选择短信模板\n" +
             "3、每个号码一行，含有参数则和号码用英文逗号分隔";
 

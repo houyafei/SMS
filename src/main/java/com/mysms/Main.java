@@ -1,7 +1,6 @@
 package com.mysms;
 
 
-import com.mysms.dto.PackageInfomation;
 import com.mysms.service.SendMsgService;
 import com.mysms.service.SomeService;
 import javafx.application.Application;
@@ -17,7 +16,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 
 
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
@@ -208,7 +206,7 @@ public class Main extends Application {
 
         Label label1 = new Label("手机号"); //phoneNum
         TextField phoneNum = new TextField();
-        phoneNum.setPromptText("13262272821");
+        phoneNum.setText("13161367295");
 
         Label label2 = new Label("参数列表");
         TextField content = new TextField();
@@ -372,22 +370,31 @@ public class Main extends Application {
         return vBox;
     }
 
-    private VBox obtainHasSentMsgCount() {
+    private VBox statisticAndConfig() {
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.TOP_LEFT);
         vBox.setPadding(new Insets(10, 0, 8, 0));
         vBox.setSpacing(5);
-//        HBox hBox0 = new HBox();
-//        hBox0.setAlignment(Pos.CENTER_LEFT);
-//        hBox0.setPadding(new Insets(10, 0, 8, 0));
-//        hBox0.setSpacing(5);
-//        Label packageQuery = new Label("套餐查询:");
-//        Button packageBtn = new Button("查询");
-//        packageBtn.setOnMouseClicked(eve -> openNewWindow());
-//
-//        hBox0.getChildren().addAll(packageQuery, packageBtn);
+        HBox hBox0 = new HBox();
+        hBox0.setAlignment(Pos.CENTER_LEFT);
+        hBox0.setPadding(new Insets(10, 0, 8, 0));
+        hBox0.setSpacing(5);
+        Label signLabel = new Label("短信签名配置：（默认无需配置）");
+        TextField signName = new TextField();
+        if (ValueConstant.SGIN_NAME.equals("")) {
+            signName.setPromptText("默认无需配置");
+        } else {
+            signName.setText(ValueConstant.SGIN_NAME);
+        }
+        Button saveConfig = new Button("保存");
+        saveConfig.setOnMouseClicked(eve -> {
+            ValueConstant.SGIN_NAME = signName.getText().trim();
+            resultReport.setText("已经保存\n-->【!】未进行可用性检查，请自行测试。");
+        });
 
-        Label prompt = new Label("发送短信数量查询: (先选择起止日期)");
+        hBox0.getChildren().addAll(signLabel, signName, saveConfig);
+
+        Label prompt = new Label("发送短信数量查询:(先选择起止日期)");
 
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER_LEFT);
@@ -421,7 +428,7 @@ public class Main extends Application {
             }
         });
         hBox.getChildren().addAll(beginDate, endDate, obtainCount);
-        vBox.getChildren().addAll(prompt, hBox, result);
+        vBox.getChildren().addAll(hBox0, prompt, hBox, result);
         return vBox;
     }
 
@@ -449,8 +456,8 @@ public class Main extends Application {
         tab3.setContent(selectFile());
         tab3.setClosable(false);
         Tab tab4 = new Tab();
-        tab4.setText("短信发送统计");
-        tab4.setContent(obtainHasSentMsgCount());
+        tab4.setText("统计与配置");
+        tab4.setContent(statisticAndConfig());
         tab4.setClosable(false);
 
         ways.getTabs().addAll(tab0, tab1, tab2, tab3, tab4);

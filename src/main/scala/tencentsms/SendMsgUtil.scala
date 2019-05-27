@@ -1,5 +1,7 @@
 package tencentsms
 
+import com.fasterxml.jackson.annotation.{JsonFormat, JsonInclude}
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 import org.slf4j.LoggerFactory
 import tencentsms.util.{HttpPost, JsonMapper, TencentOnLineKey, TencentSignUtil, TencentTestKey}
 
@@ -19,8 +21,7 @@ object SendMsgUtil {
     JsonMapper.from[SmsResponse](resultStr)
   }
 
-  def sendMessage(tel: Telphone, content: Array[String], tmpId: Int, evn: Int): SmsResponse = {
-    log.info(JsonMapper.to(tel) + ": begin send msg" )
+  def sendMessage(tel: Telphone, content: Array[String], tmpId: Int, evn: Int, signName: String = ""): SmsResponse = {
     var sdkappid = ""
     var appKey = ""
     evn match {
@@ -34,7 +35,7 @@ object SendMsgUtil {
       }
     }
     val random = TencentSignUtil.random()
-    val res = TencentMsgReq(tel, content, random, appKey, tmpId)
+    val res = TencentMsgReq(tel, content, random, appKey, tmpId, signName)
     val resultStr = HttpPost.sendPost(s"https://yun.tim.qq.com/v5/tlssmssvr/sendsms?sdkappid=$sdkappid&random=$random", JsonMapper.to(res))
     val response = JsonMapper.from[SmsResponse](resultStr)
     log.info(JsonMapper.to(tel) + ":" + JsonMapper.to(response))
@@ -51,7 +52,11 @@ class TencentMsgReq(val tel: Telphone) {
   val ext: String = ""
   val extend: String = ""
   var params: Array[String] = Array()
+  // 加密签名
   var sig: String = ""
+  // 短信签名
+  @JsonInclude(Include.NON_EMPTY)
+  var sign: String = ""
   var time: Long = 0L
   var tpl_id: Int = TencentOnLineKey.tmpId
 
@@ -71,12 +76,13 @@ class TencentMsgReq(val tel: Telphone) {
 }
 
 object TencentMsgReq {
-  def apply(tel: Telphone, params: Array[String], random: String, appKey: String = TencentTestKey.appKey, tpl_id: Int = TencentOnLineKey.tmpId): TencentMsgReq = {
+  def apply(tel: Telphone, params: Array[String], random: String, appKey: String = TencentTestKey.appKey, tpl_id: Int = TencentOnLineKey.tmpId, signName: String = ""): TencentMsgReq = {
     val tencentMsgReq = new TencentMsgReq(tel)
     tencentMsgReq.buildTime(TencentSignUtil.buildTime)
     tencentMsgReq.buildSig(TencentSignUtil.buildSig(s"appkey=$appKey&random=$random&time=${tencentMsgReq.time}&mobile=${tel.mobile}"))
     tencentMsgReq.buildParams(params)
     tencentMsgReq.tpl_id = tpl_id
+    tencentMsgReq.sign = signName
     tencentMsgReq
   }
 }

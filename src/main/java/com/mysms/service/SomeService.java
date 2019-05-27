@@ -85,7 +85,7 @@ public class SomeService {
             params[i] = msg.get(i);
         }
         return SendMsgUtil.sendMessage(Telphone.apply(strs[0].trim(), "86"), params,
-                Integer.valueOf(ValueConstant.SMS_TMP_ID), ValueConstant.SELECTED_ENVIRONMENT);
+                Integer.valueOf(ValueConstant.SMS_TMP_ID), ValueConstant.SELECTED_ENVIRONMENT, ValueConstant.SGIN_NAME);
 
     }
 
@@ -94,7 +94,7 @@ public class SomeService {
             return SmsResponse.apply(1, "短信参数数量不匹配");
         } else {
             return SendMsgUtil.sendMessage(Telphone.apply(phone, "86"), variable.equals("") ? new String[0] : variable.split(","),
-                    Integer.valueOf(ValueConstant.SMS_TMP_ID), ValueConstant.SELECTED_ENVIRONMENT);
+                    Integer.valueOf(ValueConstant.SMS_TMP_ID), ValueConstant.SELECTED_ENVIRONMENT, ValueConstant.SGIN_NAME);
         }
     }
 
