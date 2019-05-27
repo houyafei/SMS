@@ -425,66 +425,6 @@ public class Main extends Application {
         return vBox;
     }
 
-    /**
-     * 创建表格
-     */
-    private void openNewWindow() {
-        Stage tableStage = new Stage();
-        tableStage.setTitle("短信平台 v1.1 套餐包信息");
-        tableStage.getIcons().add(new Image("msg.jpg"));
-        VBox vBox = new VBox();
-        vBox.setAlignment(Pos.TOP_CENTER);
-        vBox.setPadding(new Insets(10, 0, 8, 0));
-
-        final TableView<PackageInfomation> table = new TableView<>();
-        ObservableList<PackageInfomation> data = FXCollections.observableArrayList();
-
-        TableColumn packageId = new TableColumn("套餐包 ID");
-        TableColumn amount = new TableColumn("套餐包条数");
-        TableColumn used = new TableColumn("当前使用量");
-        TableColumn packageType = new TableColumn("套餐包类型");
-        TableColumn beginTime = new TableColumn("套餐包生效时间");
-        TableColumn endTime = new TableColumn("套餐包过期时间");
-        TableColumn createTime = new TableColumn("套餐包创建时间");
-
-        packageId.setCellValueFactory(new PropertyValueFactory<>("packageId"));
-        amount.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        used.setCellValueFactory(new PropertyValueFactory<>("used"));
-        packageType.setCellValueFactory(new PropertyValueFactory<>("packageType"));
-        beginTime.setCellValueFactory(new PropertyValueFactory<>("beginTime"));
-        endTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-        createTime.setCellValueFactory(new PropertyValueFactory<>("createTime"));
-
-        packageId.setMinWidth(100);
-        amount.setMinWidth(100);
-        used.setMinWidth(100);
-        packageType.setMinWidth(100);
-        beginTime.setMinWidth(150);
-        endTime.setMinWidth(150);
-        createTime.setMinWidth(150);
-
-        new Thread(() -> {
-            Platform.runLater(() -> {
-                if (data.size() == 0) {
-                    TentSmsStatistic.obtainPackageInfos(ValueConstant.SELECTED_ENVIRONMENT).foreach((info) -> {
-                        PackageInfomation temp = new PackageInfomation(info.package_id(), info.amount(), info.used(), info.type(), info.from_time(), info.to_time(), info.create_time());
-                        data.add(temp);
-                        return null;
-                    });
-                }
-            });
-
-
-        }).start();
-
-        table.setItems(data);
-        table.getColumns().addAll(packageId, amount, used, packageType, beginTime, endTime, createTime);
-        vBox.getChildren().addAll(table);
-        tableStage.setScene(new Scene(vBox, 850, 500));
-        tableStage.show();
-
-    }
-
     private HBox sendMsgWay() {
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
