@@ -379,7 +379,7 @@ public class Main extends Application {
         hBox0.setAlignment(Pos.CENTER_LEFT);
         hBox0.setPadding(new Insets(10, 0, 8, 0));
         hBox0.setSpacing(5);
-        Label signLabel = new Label("短信签名配置：（默认无需配置）");
+        Label signLabel = new Label("短信签名配置: (默认无需配置)");
         TextField signName = new TextField();
         if (ValueConstant.SGIN_NAME.equals("")) {
             signName.setPromptText("默认无需配置");
@@ -389,7 +389,11 @@ public class Main extends Application {
         Button saveConfig = new Button("保存");
         saveConfig.setOnMouseClicked(eve -> {
             ValueConstant.SGIN_NAME = signName.getText().trim();
-            resultReport.setText("已经保存\n-->【!】未进行可用性检查，请自行测试。");
+            resultReport.setText("" +
+                    "已经保存\n" +
+                    "【注意】：\n" +
+                    "1、未进行可用性检查，请自行测试。\n" +
+                    "2、测试结果以”实际短信“接收为准。");
         });
 
         hBox0.getChildren().addAll(signLabel, signName, saveConfig);
